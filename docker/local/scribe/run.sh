@@ -20,5 +20,5 @@ else
   echo 'skipping database migrations'
 fi
 
-echo 'starting api...'
-npx nx serve api
+echo 'starting scribe...'
+npx nx serve scribe

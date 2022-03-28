@@ -9,9 +9,9 @@ services:
       POSTGRES_PASSWORD: api
       POSTGRES_DB: api
     networks:
-      - algomart_test
+      - algomart_local
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - api-db:/var/lib/postgresql/data
 
@@ -23,9 +23,9 @@ services:
       POSTGRES_PASSWORD: cms
       POSTGRES_DB: cms
     networks:
-      - algomart_test
+      - algomart_local
     ports:
-      - "5433:5432"
+      - "5435:5432"
     volumes:
       - cms-db:/var/lib/postgresql/data
 
@@ -42,7 +42,7 @@ services:
       DB_CONNECTION_STRING: postgres://cms:cms@cms-db:5432/cms
       PORT: 8055
     networks:
-      - algomart_test
+      - algomart_local
     ports:
       - "8055:8055"
     volumes:
@@ -65,9 +65,32 @@ services:
       HOST: 0.0.0.0
       PORT: 3001
     networks:
-      - algomart_test
+      - algomart_local
     ports:
       - "3001:3001"
+    volumes:
+      - .:/app
+
+  scribe:
+    build:
+      context: .
+      dockerfile: docker/local/api/Dockerfile
+    restart: always
+    depends_on:
+      - api-db
+      - cms
+    env_file: apps/scribe/.env
+    environment:
+      # only put values in here that should override the API .env file
+      CMS_URL: http://cms:8055
+      CMS_PUBLIC_URL: http://localhost:8055
+      DATABASE_URL: postgres://api:api@api-db:5432/api
+      HOST: 0.0.0.0
+      PORT: 3002
+    networks:
+      - algomart_local
+    ports:
+      - "3002:3002"
     volumes:
       - .:/app
 
@@ -86,14 +109,14 @@ services:
       IMAGE_DOMAINS: lh3.googleusercontent.com,firebasestorage.googleapis.com,localhost,cms
       PORT: 3000
     networks:
-      - algomart_test
+      - algomart_local
     ports:
       - "3000:3000"
     volumes:
       - .:/app
 
 networks:
-  algomart_test:
+  algomart_local:
 
 volumes:
   api-db:

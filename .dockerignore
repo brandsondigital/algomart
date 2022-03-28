@@ -7,5 +7,8 @@
 **/cypress
 **/node_modules
 **/Dockerfile*
+.git/*
 contracts/*
 terraform/*
+docs/*
+docker-compose*.yml

@@ -21,4 +21,5 @@ else
 fi
 
 echo 'starting api...'
-npx nx serve api
+cd /app/dist/apps/scribe
+node main.js

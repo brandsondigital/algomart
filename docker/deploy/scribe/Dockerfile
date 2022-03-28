@@ -13,10 +13,10 @@ FROM node:16-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npx nx run api:build:production
+RUN npx nx run scribe:build:production
 
 
-# Production image, copy all the files and run the api
+# Production image, copy all the files and run scribe
 FROM node:16-alpine AS runner
 WORKDIR /app
 
@@ -28,12 +28,12 @@ RUN adduser --system --uid 1001 algomart
 # Copy it all... unable to copy just part of the files as we'll need "everything" to apply the migrations
 COPY --chown=algomart:nodejs --from=builder /app/ ./
 
-WORKDIR /app/dist/apps/api
+WORKDIR /app/dist/apps/scribe
 RUN npm set-script prepare "" && \
   npm install --no-package-lock --legacy-peer-deps && \
   npm install tslib@2 pino-pretty@7 pg@8 --no-package-lock
 
-COPY --chown=algomart:nodejs docker/deploy/api/run.sh ./
+COPY --chown=algomart:nodejs docker/deploy/scribe/run.sh ./
 
 USER algomart
 
