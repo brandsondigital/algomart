@@ -1,34 +1,34 @@
-import { Configuration } from '@api/configuration'
 import { FastifyInstance } from 'fastify'
-import { AsyncTask, SimpleIntervalJob } from 'toad-scheduler'
+import { AsyncTask, SimpleIntervalJob, ToadScheduler } from 'toad-scheduler'
 
-import confirmTransactionsTask from './confirm-transactions.task'
-import dispatchNotificationsTask from './dispatch-notifications.task'
-import generateCollectiblesTask from './generate-collectibles.task'
-import generatePacksTask from './generate-packs.task'
-import handlePackAuctionCompletionTask from './handle-pack-auction-completion.task'
-import handlePackAuctionExpirationTask from './handle-pack-auction-expiration.task'
-import mintCollectiblesTask from './mint-collectibles.task'
-import storeCollectiblesTask from './store-collectibles.task'
-import { updatePaymentBankStatusesTask } from './update-payment-bank-statuses.task'
-import { updatePaymentCardStatusesTask } from './update-payment-card-statuses.task'
-import { updatePaymentStatusesTask } from './update-payment-statuses.task'
+import {
+  confirmTransactionsTask,
+  dispatchNotificationsTask,
+  generateCollectiblesTask,
+  generatePacksTask,
+  handlePackAuctionCompletionTask,
+  handlePackAuctionExpirationTask,
+  mintCollectiblesTask,
+  storeCollectiblesTask,
+  updatePaymentBankStatusesTask,
+  updatePaymentCardStatusesTask,
+  updatePaymentStatusesTask,
+} from '@algomart/scribe/tasks'
 
-export function configureTasks(app: FastifyInstance) {
-  if (!Configuration.enableJobs) {
-    app.log.info('Tasks are disabled')
-    return
-  }
+import { logger } from '../configuration/logger'
 
-  app.log.info('Tasks enabled')
+type FastifyInstanceWithScheduler = FastifyInstance & {
+  scheduler: ToadScheduler
+}
 
+export function configureTasks(app: FastifyInstanceWithScheduler) {
   //#region Pack & Collectible generation/storage/minting
   app.scheduler.addSimpleIntervalJob(
     new SimpleIntervalJob(
       { seconds: 10 },
       new AsyncTask(
         'confirm-transactions',
-        async () => await confirmTransactionsTask(app.container),
+        async () => await confirmTransactionsTask(app.container, logger),
         (error) => app.log.error(error)
       )
     )
@@ -39,7 +39,7 @@ export function configureTasks(app: FastifyInstance) {
       { minutes: 1, runImmediately: true },
       new AsyncTask(
         'generate-collectibles',
-        async () => await generateCollectiblesTask(app.container),
+        async () => await generateCollectiblesTask(app.container, logger),
         (error) => app.log.error(error)
       )
     )
@@ -50,7 +50,7 @@ export function configureTasks(app: FastifyInstance) {
       { seconds: 30 },
       new AsyncTask(
         'store-collectibles',
-        async () => await storeCollectiblesTask(app.container),
+        async () => await storeCollectiblesTask(app.container, logger),
         (error) => app.log.error(error)
       )
     )
@@ -61,7 +61,7 @@ export function configureTasks(app: FastifyInstance) {
       { minutes: 1 },
       new AsyncTask(
         'generate-packs',
-        async () => await generatePacksTask(app.container),
+        async () => await generatePacksTask(app.container, logger),
         (error) => app.log.error(error)
       )
     )
@@ -72,7 +72,7 @@ export function configureTasks(app: FastifyInstance) {
       { seconds: 10 },
       new AsyncTask(
         'mint-collectibles',
-        async () => await mintCollectiblesTask(app.container),
+        async () => await mintCollectiblesTask(app.container, logger),
         (error) => app.log.error(error)
       )
     )
@@ -85,7 +85,7 @@ export function configureTasks(app: FastifyInstance) {
       { minutes: 1 },
       new AsyncTask(
         'dispatch-notifications',
-        async () => await dispatchNotificationsTask(app.container),
+        async () => await dispatchNotificationsTask(app.container, logger),
         (error) => app.log.error(error)
       )
     )
@@ -98,7 +98,8 @@ export function configureTasks(app: FastifyInstance) {
       { minutes: 1 },
       new AsyncTask(
         'handle-pack-auction-completion',
-        async () => await handlePackAuctionCompletionTask(app.container),
+        async () =>
+          await handlePackAuctionCompletionTask(app.container, logger),
         (error) => app.log.error(error)
       )
     )
@@ -109,7 +110,8 @@ export function configureTasks(app: FastifyInstance) {
       { minutes: 1 },
       new AsyncTask(
         'handle-pack-auction-expiration',
-        async () => await handlePackAuctionExpirationTask(app.container),
+        async () =>
+          await handlePackAuctionExpirationTask(app.container, logger),
         (error) => app.log.error(error)
       )
     )
@@ -122,7 +124,7 @@ export function configureTasks(app: FastifyInstance) {
       { minutes: 1 },
       new AsyncTask(
         'check-pending-banks',
-        async () => await updatePaymentBankStatusesTask(app.container),
+        async () => await updatePaymentBankStatusesTask(app.container, logger),
         (error) => app.log.error(error)
       )
     )
@@ -133,7 +135,7 @@ export function configureTasks(app: FastifyInstance) {
       { seconds: 10 },
       new AsyncTask(
         'check-pending-cards',
-        async () => await updatePaymentCardStatusesTask(app.container),
+        async () => await updatePaymentCardStatusesTask(app.container, logger),
         (error) => app.log.error(error)
       )
     )
@@ -144,7 +146,7 @@ export function configureTasks(app: FastifyInstance) {
       { seconds: 10 },
       new AsyncTask(
         'check-pending-payments',
-        async () => await updatePaymentStatusesTask(app.container),
+        async () => await updatePaymentStatusesTask(app.container, logger),
         (error) => app.log.error(error)
       )
     )
